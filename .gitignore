@@ -1,0 +1,25 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+env/
+venv/
+
+# VSCode settings (optional)
+.vscode/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Log and output
+log.csv
+*.log
+
+# Environment variables
+.env
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
