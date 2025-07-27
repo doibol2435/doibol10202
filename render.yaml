@@ -1,12 +1,18 @@
 services:
   - type: web
-    name: crypto-signals doibol
-    env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn app:app --host 0.0.0.0 --port 10000"
+    name: crypto-signal-app
+    runtime: python
+    region: Oregon (US West)
+    branch: master
     plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port 10000
     envVars:
       - key: TELEGRAM_TOKEN
-        fromEnvVar: TELEGRAM_TOKEN
+        sync: false
       - key: TELEGRAM_CHAT_ID
-        fromEnvVar: TELEGRAM_CHAT_ID
+        sync: false
+      - key: BINANCE_API_KEY
+        sync: false
+      - key: BINANCE_API_SECRET
+        sync: false

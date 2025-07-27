@@ -1,11 +1,8 @@
+setuptools<81
 fastapi
-uvicorn[standard]
+uvicorn
 pandas
 pandas-ta
 numpy==1.24.4
-python-dotenv
 requests
-pytz
-apscheduler
-jinja2
-setuptools<81
+python-dotenv
