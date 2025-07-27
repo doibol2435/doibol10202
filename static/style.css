@@ -1,0 +1,62 @@
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  margin: 2rem;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+h2 {
+  margin-bottom: 1rem;
+}
+
+label {
+  font-weight: bold;
+  margin-right: 1rem;
+}
+
+select, button {
+  padding: 0.5rem 0.7rem;
+  margin-left: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+th, td {
+  padding: 0.6rem;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+th {
+  background-color: #f0f0f0;
+}
+
+.buy {
+  background-color: #e0fbe0;
+}
+
+.sell {
+  background-color: #ffe0e0;
+}
+
+.hold {
+  background-color: #fff8dc;
+}

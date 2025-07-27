@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📊 Crypto Signals</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <h2>📊 Bảng Tín hiệu Crypto (Scalping)</h2>
+
+  <label>Lọc tín hiệu:
+    <select id="filter">
+      <option value="All">Tất cả</option>
+      <option value="Buy">Buy</option>
+      <option value="Sell">Sell</option>
+      <option value="Hold">Hold</option>
+    </select>
+  </label>
+
+  <button onclick="loadData()">🔄 Quét lại</button>
+  <p id="updated"></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Symbol</th>
+        <th>Type</th>
+        <th>Entry</th>
+        <th>TP1</th>
+        <th>TP2</th>
+        <th>TP3</th>
+        <th>SL</th>
+        <th>Score</th>
+        <th>Thời gian</th>
+      </tr>
+    </thead>
+    <tbody id="signals"></tbody>
+  </table>
+
+  <script>
+    async function loadData() {
+      document.title = "🔄 Cập nhật tín hiệu...";
+      const res = await fetch("/scan");
+      const data = await res.json();
+      const filter = document.getElementById("filter").value;
+
+      const tbody = document.getElementById("signals");
+      tbody.innerHTML = "";
+
+      (data.results || []).forEach(row => {
+        if (filter !== "All" && row.decision !== filter) return;
+
+        const entry = row.price;
+        const tp1 = entry * 1.02;
+        const tp2 = entry * 1.04;
+        const tp3 = entry * 1.06;
+        const sl = entry * 0.98;
+        const score = `B:${row.score_buy} / S:${row.score_sell}`;
+
+        const date = new Date(row.timestamp);
+        const timeStr = `${date.getDate().toString().padStart(2, '0')}/${
+          (date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${
+          date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+        const now = new Date();
+        const diffMins = Math.floor((now - date) / 60000);
+
+        const tr = document.createElement("tr");
+        tr.className = row.decision === "Buy"
+          ? "buy"
+          : row.decision === "Sell"
+          ? "sell"
+          : "hold";
+
+        tr.innerHTML = `
+          <td>${row.symbol}</td>
+          <td>${row.decision}</td>
+          <td>${entry}</td>
+          <td>${tp1}</td>
+          <td>${tp2}</td>
+          <td>${tp3}</td>
+          <td>${sl}</td>
+          <td>${score}</td>
+          <td>${timeStr} (${diffMins} phút trước)</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("updated").innerText =
+        `Lần cập nhật: ${new Date().toLocaleTimeString("vi-VN")}`;
+      document.title = "📊 Crypto Signals";
+    }
+
+    document.getElementById("filter").addEventListener("change", loadData);
+    loadData();
+    setInterval(loadData, 60000);
+  </script>
+</body>
+</html>
