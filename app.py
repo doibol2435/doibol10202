@@ -12,6 +12,8 @@ from datetime import datetime
 from pytz import timezone
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+import logging
 
 load_dotenv()
 
@@ -47,15 +49,25 @@ def fetch_ohlcv(symbol: str, interval: str = "15m", limit: int = 100):
 
 def analyze(df: pd.DataFrame):
     df["RSI"] = ta.rsi(df["close"], length=14)
+
     stoch = ta.stoch(df["high"], df["low"], df["close"])
+    if stoch is None or stoch.empty:
+        return None
     df["%K"] = stoch["STOCHk_14_3_3"]
     df["%D"] = stoch["STOCHd_14_3_3"]
+
     macd = ta.macd(df["close"])
+    if macd is None or macd.empty:
+        return None
     df["MACD"] = macd["MACD_12_26_9"]
     df["MACD_signal"] = macd["MACDs_12_26_9"]
+
     bb = ta.bbands(df["close"], length=20)
+    if bb is None or bb.empty:
+        return None
     df["BB_lower"] = bb["BBL_20_2.0"]
     df["BB_upper"] = bb["BBU_20_2.0"]
+
     df.dropna(inplace=True)
     if df.empty or len(df) < 2:
         return None
@@ -100,7 +112,10 @@ def send_telegram(msg: str):
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {"chat_id": TELEGRAM_CHAT_ID, "text": msg}
-    requests.post(url, data=payload)
+    try:
+        requests.post(url, data=payload)
+    except Exception as e:
+        logging.warning(f"Telegram error: {e}")
 
 def log_signal(symbol, direction, entry, tp1, tp2, tp3, sl, timestamp=None):
     with open("log.csv", mode="a", newline="") as file:
@@ -128,29 +143,33 @@ def scan_top_futures():
                     signals.append({"symbol": symbol, **result})
                     if result["decision"] in ["Buy", "Sell"]:
                         entry = result["price"]
-                        tp1 = entry * 1.02
-                        tp2 = entry * 1.04
-                        tp3 = entry * 1.06
-                        sl = entry * 0.98
+                        tp1 = round(entry * 1.02, 4)
+                        tp2 = round(entry * 1.04, 4)
+                        tp3 = round(entry * 1.06, 4)
+                        sl = round(entry * 0.98, 4)
                         msg = f"""{result['decision']} Signal: {symbol}
 Entry: {entry}
 TP1: {tp1} | TP2: {tp2} | TP3: {tp3}
 SL: {sl}"""
                         send_telegram(msg)
                         log_signal(symbol, result["decision"], entry, tp1, tp2, tp3, sl, result["timestamp"])
-            except:
+            except Exception as inner:
+                logging.warning(f"{symbol} failed: {inner}")
                 continue
         return {"results": signals, "count": len(signals)}
     except Exception as e:
         return {"error": str(e)}
 
-# Auto scan scheduler
-def auto_scan():
+# Auto scan scheduler (run in background every 5 minutes)
+def scan_job():
+    logging.info("Running background scan...")
     try:
-        requests.get("http://localhost:8000/scan")
-    except:
-        pass
+        scan_top_futures()
+    except Exception as e:
+        logging.warning(f"Scheduled scan failed: {e}")
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(auto_scan, "interval", minutes=5)
-scheduler.start()
+@app.on_event("startup")
+def start_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(scan_job, IntervalTrigger(minutes=5))
+    scheduler.start()
