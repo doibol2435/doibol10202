@@ -1,7 +1,7 @@
 services:
   - type: web
     name: crypto-signal-app
-    runtime: python
+    runtime: python 3.10
     region: Oregon (US West)
     branch: master
     plan: free
